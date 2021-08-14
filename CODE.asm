@@ -1,0 +1,677 @@
+MAIN:
+ORG 	0000H
+DO	EQU 523
+RE	EQU	587
+MI	EQU	659
+FA	EQU	698
+SO	EQU 784
+LA	EQU	880
+TI1	EQU 988
+DOh	EQU 1047
+MISTAKE EQU 2000
+
+FLAG		EQU 0
+
+TONE_LOOP EQU 30H
+SONG_COUNTER EQU 31H
+SCORE 		EQU	32H
+COUNT EQU 33H
+COUNT1 EQU 34H
+
+MOV COUNT,#10
+MOV COUNT1,#3
+MOV TONE_LOOP,#9
+MOV SONG_COUNTER,#0
+MOV SCORE,#00H
+CLR FLAG
+
+
+; NUMBER 1 IS FOR DO
+; NUMBER 2 IS FOR RE
+; NUMBER 3 IS FOR MI
+; NUMBER 4 IS FOR FA
+; NUMBER 5 IS FOR SO
+; NUMBER 6 IS FOR LA
+; NUMBER 7 IS FOR TI1
+; NUMBER 8 IS FOR DOh
+MOV R1, #70H
+
+
+BUZ		EQU	P3.7
+
+
+
+MOV	TMOD, #01H
+
+MOV P0,#0FFH
+	
+START:
+		CLR FLAG
+		CLR BUZ
+		MOV R1, #70H
+		
+
+		
+		MOV P2,#0FFH
+		MOV P1,#0FFH
+		
+		MOV TONE_LOOP,#8
+		
+		
+		CALL MODE_BUTTON          ; CHECK FOR BIG BUTTON PRESS
+		
+	
+MODE1:								; PIANO MODE (RIGHT BUTTON)
+		CJNE R4,#10,MODE2
+		
+		CALL CHECK_BUTTON
+		CALL PIANO
+		JMP MODE1
+MODE2:								; GAME MODE (LEFT BUTTON)
+		CJNE R4,#11,START
+		;MOV A,#0
+			
+		MOV	 DPTR, #TB1            ; LOAD THE SONG HERE
+		
+MUSIC_GAME:
+		MOV A,SONG_COUNTER
+		MOVC 	A, @A+DPTR
+	
+K0:		
+		CJNE A,#1, K1
+		;PUSH ACC
+		CALL DO_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J1
+		INC SONG_COUNTER
+		JMP START_CHECK
+J1:		
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K1:		
+		CJNE A,#2, K2
+		;PUSH ACC		
+		CALL RE_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J2
+		INC SONG_COUNTER
+		JMP START_CHECK
+J2:	
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K2:		
+		CJNE A,#3, K3
+		;PUSH ACC		
+		CALL MI_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J3
+		INC SONG_COUNTER
+		JMP START_CHECK
+J3:	
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K3:		
+		CJNE A,#4, K4 
+		;PUSH ACC
+		CALL FA_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J4
+		INC SONG_COUNTER
+		JMP START_CHECK
+J4:	
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K4:		
+		CJNE A,#5, K5
+		;PUSH ACC
+		CALL SO_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J5
+		INC SONG_COUNTER
+		JMP START_CHECK
+J5:	
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K5:		
+		CJNE A,#6, K6 
+		;PUSH ACC
+		CALL LA_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J6
+		INC SONG_COUNTER
+		JMP START_CHECK
+J6:	
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K6:		
+		CJNE A,#7, K7 
+		;PUSH ACC
+		CALL TI_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J7
+		INC SONG_COUNTER
+		JMP START_CHECK
+J7:
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+K7:		
+		CJNE A,#8, NN
+		;PUSH ACC
+		CALL DOh_SOUND
+		;INC DPTR
+		DJNZ TONE_LOOP,J8
+		INC SONG_COUNTER
+		JMP START_CHECK
+J8:
+		;POP ACC
+		;MOV A,#0
+		INC SONG_COUNTER
+		JMP MUSIC_GAME
+		
+NN:
+	LJMP K0		
+
+; WE SET A FLAG
+START_CHECK:
+		SETB FLAG
+		CALL CHECKER
+
+		JMP START
+		
+	
+PIANO:		
+		;CALL CHECK_BUTTON				
+		CJNE R3, #1, PT11
+			
+		CALL DO_SOUND
+PT11:
+		CJNE R3, #2, PT2
+					
+		CALL RE_SOUND
+PT2:
+		CJNE R3, #3, PT3
+			
+		CALL MI_SOUND
+PT3:
+		CJNE R3, #4, PT4	
+		
+		CALL FA_SOUND
+PT4:
+		CJNE R3, #5, PT5
+		
+		CALL SO_SOUND
+PT5:
+		CJNE R3, #6, PT6
+		
+		CALL LA_SOUND
+PT6:
+		CJNE R3, #7, PT7
+				
+		CALL TI_SOUND
+PT7:
+		CJNE R3, #8, END_PIANO	 
+			
+		CALL DOh_SOUND
+END_PIANO:
+		RET
+;====================================================
+DO_SOUND: 
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_DO:		
+		CLR P1.0
+		CPL BUZ
+		ACALL DELAY
+		DJNZ R6,_DO
+		DJNZ R7,_DO
+		SETB P1.0
+		
+		JB FLAG,LEAVE_DO
+		MOV A,#1
+		MOV @R1,A
+		INC R1
+LEAVE_DO:		
+		RET
+	  
+DELAY: 
+	MOV	TH0, #HIGH(-DO)
+	MOV	TL0, #LOW(-DO)
+       SETB TR0
+HERE: JNB TF0,HERE
+      CLR TR0
+      CLR TF0
+      RET
+;====================================================
+	
+;====================================================	
+RE_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_RE:
+		CLR P1.1
+		CPL BUZ
+		ACALL DELAY1
+		DJNZ R6,_RE
+		DJNZ R7,_RE
+		SETB P1.1
+		
+		JB FLAG,LEAVE_RE
+		MOV A,#2
+		MOV @R1,A
+		INC R1
+LEAVE_RE:		
+		RET
+	  
+DELAY1:
+		MOV	TH0, #HIGH(-RE)
+		MOV	TL0, #LOW(-RE)
+		SETB TR0
+HERE1: JNB TF0,HERE1
+		CLR TR0
+		CLR TF0
+		RET
+		
+	
+;====================================================		
+		
+;====================================================	
+MI_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_MI:
+		CLR P1.2
+		CPL BUZ
+		ACALL DELAY2
+		DJNZ R6,_MI
+		DJNZ R7,_MI
+		SETB P1.2
+		
+		JB FLAG,LEAVE_MI
+		MOV A,#3
+		MOV @R1,A
+		INC R1
+LEAVE_MI:
+		RET
+	  
+DELAY2:
+		MOV	TH0, #HIGH(-MI)
+		MOV	TL0, #LOW(-MI)
+		SETB TR0
+HERE2: JNB TF0,HERE2
+		CLR TR0
+		CLR TF0
+		RET
+	  
+
+;====================================================			
+
+;====================================================	
+FA_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_FA:
+		CLR P1.3
+		CPL BUZ
+		ACALL DELAY3
+		DJNZ R6,_FA
+		DJNZ R7,_FA
+		SETB P1.3
+		
+		JB FLAG,LEAVE_FA
+		MOV A,#4
+		MOV @R1,A
+		INC R1
+LEAVE_FA:
+		RET
+	  
+DELAY3:
+		MOV	TH0, #HIGH(-FA)
+		MOV	TL0, #LOW(-FA)
+		SETB TR0
+HERE3: JNB TF0,HERE3
+		CLR TR0
+		CLR TF0
+		RET
+		
+;====================================================
+
+;====================================================
+SO_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_SO:
+		CLR P1.4
+		CPL BUZ
+		ACALL DELAY4
+		DJNZ R6,_SO
+		DJNZ R7,_SO
+		SETB P1.4
+		
+		JB FLAG,LEAVE_SO
+		MOV A,#5
+		MOV @R1,A
+		INC R1
+LEAVE_SO:
+		RET
+	  
+DELAY4:
+		MOV	TH0, #HIGH(-SO)
+		MOV	TL0, #LOW(-SO)
+		SETB TR0
+HERE4: JNB TF0,HERE4
+		CLR TR0
+		CLR TF0
+		RET
+	
+;====================================================
+
+;====================================================
+LA_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_LA:
+		CLR P1.5
+		CPL BUZ
+		ACALL DELAY5
+		DJNZ R6,_LA
+		DJNZ R7,_LA
+		SETB P1.5
+		
+		JB FLAG,LEAVE_LA
+		MOV A,#6
+		MOV @R1,A
+		INC R1
+LEAVE_LA:
+		RET
+	  
+DELAY5:
+		MOV	TH0, #HIGH(-LA)
+		MOV	TL0, #LOW(-LA)
+		SETB TR0
+HERE5: JNB TF0,HERE5
+		CLR TR0
+		CLR TF0
+		RET
+		
+;====================================================
+
+;====================================================
+TI_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_TI:
+		CLR P1.6 ; turn on led
+		CPL BUZ ; turn on speaker
+		ACALL DELAY6
+		DJNZ R6,_TI
+		DJNZ R7,_TI
+		SETB P1.6 ; turn off led
+		
+		JB FLAG,LEAVE_TI ; only used for game mode
+		MOV A,#7
+		MOV @R1,A
+		INC R1
+LEAVE_TI:
+		RET
+	  
+DELAY6:
+		MOV	TH0, #HIGH(-TI1)
+		MOV	TL0, #LOW(-TI1)
+		SETB TR0
+HERE6: JNB TF0,HERE6
+		CLR TR0
+		CLR TF0
+		RET
+		
+;====================================================
+
+;====================================================	
+DOh_SOUND:
+		MOV R6,COUNT
+        MOV R7,COUNT1
+_DOh:
+		CLR P1.7
+		CPL BUZ
+		ACALL DELAY7
+		DJNZ R6,_DOh
+		DJNZ R7,_DOh
+		SETB P1.7
+		
+		JB FLAG,LEAVE_DOh
+		MOV A,#8
+		MOV @R1,A
+		INC R1
+LEAVE_DOh:
+		RET
+	  
+DELAY7:
+		MOV	TH0, #HIGH(-DOh)
+		MOV	TL0, #LOW(-DOh)
+		SETB TR0
+HERE7: JNB TF0,HERE7
+		CLR TR0
+		CLR TF0
+		RET
+		
+;====================================================
+
+
+FINISH:
+
+		JMP START
+
+
+;==============1sec_delay=====================
+Delay_1sec:
+	
+		MOV	 	R2,#10
+Delay_1:	MOV		R0,#200
+Loop1:
+		MOV	 	R3,#250
+Loop2:	DJNZ		R3,Loop2
+		DJNZ		R0,Loop1
+		DJNZ		R2,Delay_1
+
+		
+		RET
+
+
+
+CHECK_BUTTON:
+		
+	
+		JNB p2.7, B1
+		JNB p2.6, B2
+		JNB p2.5, B3
+		JNB p2.4, B4
+		JNB p2.3, B5
+		JNB p2.2, B6
+		JNB p2.1, B7
+		JNB p2.0, B8
+	
+		JMP CHECK_BUTTON
+B1:
+		;CLR P1.0
+		JNB p2.7, $
+		MOV R3, #1
+		;SETB P1.0
+		RET
+B2:
+		;CLR P1.1
+		JNB p2.6, $
+		MOV R3, #2
+		;SETB P1.1
+		RET
+B3:
+		;CLR P1.2
+		JNB p2.5, $
+		MOV R3, #3
+		;SETB P1.2
+		RET
+B4:
+		;CLR P1.3
+		JNB p2.4, $
+		MOV R3, #4
+		;SETB P1.3
+		RET
+B5:
+		;CLR P1.4
+		JNB p2.3, $
+		MOV R3, #5
+		;SETB P1.4
+		RET
+B6:
+		;CLR P1.5
+		JNB p2.2, $
+		MOV R3, #6
+		;SETB P1.5
+		RET
+B7:
+		;CLR P1.6
+		JNB p2.1, $
+		MOV R3, #7
+		;SETB P1.6
+		RET
+B8:
+		;CLR P1.7
+		JNB p2.0, $
+		MOV R3, #8
+		;SETB P1.7
+
+RET
+
+
+
+
+MODE_BUTTON:
+			JNB p3.1, C1
+			JNB p3.2, C2
+			JMP MODE_BUTTON
+C1:		
+		JNB p3.1, $
+		MOV R4, #10
+RET
+C2:	
+		JNB p3.2, $
+		MOV R4, #11
+RET
+		
+CHECKER:		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,70H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,71H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,72H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,73H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,74H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,75H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,76H,END_GAME
+		CALL PIANO
+		
+		CALL CHECK_BUTTON
+		MOV A,R3
+		CJNE A,77H,END_GAME
+		CALL PIANO
+		
+		INC SCORE
+		MOV A,SCORE
+		CPL A
+		MOV P0,A
+		
+		DEC COUNT
+	
+	
+		
+		RET
+
+END_GAME:
+		CALL PIANO
+		;CLR P1.0
+
+ 
+		MOV R6,#5
+        MOV R7,#5
+_MK:		
+		MOV P1,#00H
+		CPL BUZ
+		ACALL DELAYMS
+		DJNZ R6,_MK
+		DJNZ R7,_MK
+		MOV P1,#0FFH
+				
+		JMP MAIN
+	  
+DELAYMS: 
+	MOV	TH0, #HIGH(-MISTAKE)
+	MOV	TL0, #LOW(-MISTAKE)
+       SETB TR0
+HEREMS: JNB TF0,HEREMS
+      CLR TR0
+      CLR TF0
+      RET		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+RET
+
+	TB1: db 1,2,3,4,5,6,7,8
+	     db 8,7,6,8,4,1,2,1	
+		 db 2,6,1,8,7,1,3,2
+		 db 5,6,5,6,7,7,8,1
+		 db 8,4,3,2,3,7,6,7
+		 db 6,5,8,6,5,7,2,1
+		 db 7,1,2,1,2,6,6,3
+		 
+END 
+
+
+
+
